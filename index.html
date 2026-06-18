@@ -1,50 +1,152 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Price Match MVP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Price Match Monitor</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 32px; background: #f7f5ef; color: #1d1d1f; }
-    main { max-width: 980px; margin: 0 auto; }
-    section { background: white; border: 1px solid #e8e1d3; border-radius: 16px; padding: 20px; margin: 16px 0; }
-    li { margin: 12px 0; line-height: 1.45; }
-    pre { white-space: pre-wrap; background: #111827; color: #f9fafb; padding: 14px; border-radius: 10px; }
-    a { color: #075985; }
+    :root { --ink:#17201b; --muted:#667067; --bg:#f4efe5; --card:#fffaf1; --line:#e4d8c5; --green:#16794f; --red:#b42318; --amber:#b7791f; --blue:#2557a7; --shadow:0 24px 80px rgba(38,28,12,.12); }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif; color:var(--ink); background:radial-gradient(circle at top left,#fff7df 0,#f4efe5 32%,#eef6ef 100%); }
+    main { width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:36px 0 64px; }
+    a { color:var(--blue); word-break:break-word; }
+    code { background:#f1eadc; padding:2px 6px; border-radius:7px; }
+    .hero { display:grid; grid-template-columns:1.5fr .8fr; gap:24px; align-items:stretch; padding:34px; border:1px solid rgba(255,255,255,.8); background:linear-gradient(135deg,rgba(255,250,241,.96),rgba(238,247,239,.9)); border-radius:32px; box-shadow:var(--shadow); }
+    .eyebrow { margin:0 0 8px; text-transform:uppercase; letter-spacing:.12em; font-size:12px; font-weight:750; color:var(--green); }
+    h1 { margin:0; font-size:clamp(36px,5vw,68px); line-height:.95; letter-spacing:-.06em; max-width:760px; }
+    h2 { margin:0; font-size:28px; letter-spacing:-.03em; }
+    h3 { margin:0 0 6px; font-size:18px; }
+    .lede { color:var(--muted); font-size:18px; max-width:720px; line-height:1.55; }
+    .button { display:inline-flex; margin-right:10px; padding:12px 16px; border-radius:999px; background:var(--ink); color:white; text-decoration:none; font-weight:700; }
+    .button.secondary { background:#e8ddca; color:var(--ink); }
+    .hero-card,.panel,.metrics article,.list-card,.claim-card { background:rgba(255,250,241,.86); border:1px solid var(--line); border-radius:24px; box-shadow:0 14px 40px rgba(38,28,12,.07); }
+    .hero-card { padding:24px; position:relative; overflow:hidden; }
+    .hero-card h2 { font-size:42px; }
+    .pulse { width:12px; height:12px; display:inline-block; border-radius:999px; background:var(--green); box-shadow:0 0 0 10px rgba(22,121,79,.12); }
+    .muted { color:var(--muted); }
+    .metrics { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin:18px 0; }
+    .metrics article { padding:18px; }
+    .metrics span { display:block; font-size:26px; font-weight:850; letter-spacing:-.03em; }
+    .metrics p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+    .panel { padding:22px; margin:18px 0; }
+    .panel-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    .chip { display:inline-flex; align-items:center; justify-content:center; padding:7px 10px; border-radius:999px; font-size:12px; font-weight:800; background:#efe7d9; color:#4d4437; white-space:nowrap; }
+    .chip-eligible,.chip-draft-ready,.chip-monitoring,.chip-scraped { background:#dff4e8; color:var(--green); }
+    .chip-reject,.chip-stopped { background:#ffe1dd; color:var(--red); }
+    .chip-review,.chip-needs-review,.chip-pending-consent { background:#fff0cf; color:var(--amber); }
+    .latest-grid { display:grid; grid-template-columns:2fr repeat(3,1fr); gap:14px; }
+    .latest-grid > div { padding:16px; border-radius:18px; background:white; border:1px solid #eadfce; }
+    .latest-grid strong { font-size:24px; }
+    .source-line { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; color:var(--muted); font-size:13px; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .list-card,.claim-card { padding:16px; margin:12px 0; display:flex; justify-content:space-between; gap:16px; }
+    .list-card.compact { align-items:center; }
+    .right { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+    .claim-card { display:block; }
+    details { margin-top:10px; }
+    summary { cursor:pointer; font-weight:800; color:var(--blue); }
+    pre { white-space:pre-wrap; background:#101820; color:#f7fff9; padding:16px; border-radius:16px; overflow:auto; }
+    .timeline { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+    .timeline div { background:white; border:1px solid #eadfce; border-radius:18px; padding:16px; }
+    .timeline span { width:28px; height:28px; display:grid; place-items:center; border-radius:999px; background:var(--ink); color:white; font-weight:800; margin-bottom:10px; }
+    .timeline p { color:var(--muted); margin:.4rem 0 0; font-size:13px; }
+    .empty { color:var(--muted); padding:10px 0; }
+    footer { color:var(--muted); margin-top:24px; text-align:center; }
+    @media (max-width:900px) { .hero,.grid-2,.latest-grid,.timeline { grid-template-columns:1fr; } .metrics { grid-template-columns:repeat(2,1fr); } .list-card { flex-direction:column; } .right { text-align:left; align-items:flex-start; } }
   </style>
 </head>
 <body>
   <main>
-    <h1>Price Match MVP</h1>
-    <p>DB: <code>data/mvp.sqlite3</code></p>
-    <section><h2>Bookings</h2><ul>
-        <li>
-          <strong>#1 Hotel Demo Valencia</strong><br>
-          Booking.com confirmation 1234567890<br>
-          2026-08-10 → 2026-08-12, 2 guests, Superior Double Room<br>
-          EUR 420.00 · pending_consent
-        </li>
-        </ul></section>
-    <section><h2>Price snapshots</h2><ul><li>No price snapshots yet</li></ul></section>
-    <section><h2>Candidate rates</h2><ul>
-        <li>
-          <strong>#1 booking #1 · eligible</strong><br>
-          Hotel Direct: EUR 365.00<br>
-          Hotel Demo Valencia · Superior Double Room<br>
-          <a href="https://example-hotel.invalid/valencia/superior-double">https://example-hotel.invalid/valencia/superior-double</a>
-        </li>
+    
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Hotel price-match monitor</p>
+          <h1>Catch cheaper like-for-like rooms before check-in.</h1>
+          <p class="lede">Read-only email intake, conservative public-page polling, deterministic match rules, human-reviewed claims.</p>
+          <div class="hero-actions">
+            <a class="button" href="#polling">View polling</a>
+            <a class="button secondary" href="#claims">Claim drafts</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <span class="pulse"></span>
+          <p class="muted">Polling status</p>
+          <h2>Waiting</h2>
+          <p>No public-price scrape has been stored yet.</p>
+        </div>
+      </section>
+
+      <section class="metrics">
+        <article><span>1</span><p>Bookings parsed</p></article>
+        <article><span>0</span><p>Actively monitored</p></article>
+        <article><span>0</span><p>Price snapshots</p></article>
+        <article><span>1</span><p>Eligible matches</p></article>
+        <article><span>1</span><p>Rejected rates</p></article>
+        <article><span>€55.00</span><p>Potential savings</p></article>
+      </section>
+    
+    
+        <section class="panel" id="polling">
+          <div class="panel-head"><div><p class="eyebrow">Polling</p><h2>No scrapes yet</h2></div><span class="chip">Waiting</span></div>
+          <p class="muted">Run <code>PYTHONPATH=src python3 -m pricematch.cli poll-once</code> or import a captured scrape.</p>
+        </section>
         
-        <li>
-          <strong>#2 booking #1 · reject</strong><br>
-          Member Rates Example: EUR 350.00<br>
-          Hotel Demo Valencia · Superior Double Room<br>
-          <a href="https://example.invalid/member-rate">https://example.invalid/member-rate</a>
-        </li>
-        </ul></section>
-    <section><h2>Claim drafts</h2><ul>
-        <li>
-          <strong>#1 · draft_ready</strong><br>
-          Booking #1 candidate #1 · saving 55.00 · confidence 1.00
-          <details><summary>Draft</summary><pre>Hi Booking.com support,
+    
+      <section class="panel">
+        <div class="panel-head"><div><p class="eyebrow">Workflow</p><h2>Automation path</h2></div></div>
+        <div class="timeline">
+          <div><span>1</span><strong>Email read</strong><p>Gmail / Outlook / IMAP read-only intake.</p></div>
+          <div><span>2</span><strong>Booking parsed</strong><p>Booking.com confirmation normalized into rules-safe fields.</p></div>
+          <div><span>3</span><strong>Poll scrape</strong><p>Public room prices captured with evidence.</p></div>
+          <div><span>4</span><strong>Match rules</strong><p>Room, dates, meal, cancellation, currency, exclusions.</p></div>
+          <div><span>5</span><strong>Alert + draft</strong><p>One deduped notification and human-reviewed claim draft.</p></div>
+        </div>
+      </section>
+    
+    <section class="grid-2">
+      <div class="panel"><div class="panel-head"><div><p class="eyebrow">Bookings</p><h2>Monitored reservations</h2></div></div>
+        <article class="list-card">
+          <div>
+            <p class="eyebrow">Booking.com · confirmation 1234567890</p>
+            <h3>Hotel Demo Valencia</h3>
+            <p>2026-08-10 → 2026-08-12 · 2 guests · Superior Double Room</p>
+          </div>
+          <div class="right">
+            <span class="chip chip-pending-consent">Pending consent</span>
+            <strong>€420.00</strong>
+          </div>
+        </article>
+        </div>
+      <div class="panel"><div class="panel-head"><div><p class="eyebrow">Snapshots</p><h2>Scraped public prices</h2></div></div><p class="empty">No price snapshots yet.</p></div>
+    </section>
+    <section class="grid-2">
+      <div class="panel"><div class="panel-head"><div><p class="eyebrow">Matcher</p><h2>Candidate decisions</h2></div></div>
+        <article class="list-card compact">
+          <div>
+            <p class="eyebrow">Booking #1 · Hotel Direct</p>
+            <h3>Hotel Demo Valencia · Superior Double Room</h3>
+            <a href="https://example-hotel.invalid/valencia/superior-double">https://example-hotel.invalid/valencia/superior-double</a>
+          </div>
+          <div class="right"><span class="chip chip-eligible">Eligible</span><strong>€365.00</strong></div>
+        </article>
+        
+        <article class="list-card compact">
+          <div>
+            <p class="eyebrow">Booking #1 · Member Rates Example</p>
+            <h3>Hotel Demo Valencia · Superior Double Room</h3>
+            <a href="https://example.invalid/member-rate">https://example.invalid/member-rate</a>
+          </div>
+          <div class="right"><span class="chip chip-reject">Reject</span><strong>€350.00</strong></div>
+        </article>
+        </div>
+      <div class="panel" id="claims"><div class="panel-head"><div><p class="eyebrow">Ops review</p><h2>Claim drafts</h2></div><span class="chip">1 drafts</span></div>
+        <article class="claim-card">
+          <div class="panel-head">
+            <div><p class="eyebrow">Booking #1 · candidate #1</p><h3>€55.00 potential saving</h3></div>
+            <span class="chip chip-draft-ready">Draft ready</span>
+          </div>
+          <p class="muted">Confidence 1.00 · notified not yet</p>
+          <details><summary>Claim draft</summary><pre>Hi Booking.com support,
 
 I am requesting a price match for my reservation.
 
@@ -73,8 +175,10 @@ Estimated saving: EUR 55.00
 Match confidence: 1.00
 
 Please review this under the Booking.com price match policy and amend the reservation price if eligible. Evidence screenshots/links are available in the attached evidence pack.</pre></details>
-        </li>
-        </ul></section>
+        </article>
+        </div>
+    </section>
+    <footer>DB: <code>data/mvp.sqlite3</code> · Static export generated from the same server-rendered dashboard.</footer>
   </main>
 </body>
 </html>
